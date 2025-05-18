@@ -1,0 +1,6 @@
+outs:
+- md5: 4db8ff1a31e926070f161e7cea2a8a6d.dir
+  size: 24576
+  nfiles: 1
+  hash: md5
+  path: volume

@@ -1,0 +1,57 @@
+[tool.poetry]
+name = "regime-predictor-lib"
+version = "0.1.0"
+description = "Multi-resolution temporal ensemble for regimen shift prediction."
+authors = ["Leon Becker <leonbecker0101@gmail.com>"]
+readme = "README.md"
+packages = [{include = "regime_predictor_lib"}] # Adjusted to match structure
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.23.0"
+pandas = "^2.0.0"
+scikit-learn = "^1.2.0"
+# Forest Models
+xgboost = "^1.7.0"
+catboost = "^1.2.0"
+lightgbm = "^3.3.0"
+# Gaussian Process
+gpy = "^1.10.0" # Or other GP libraries like GPflow, BoTorch
+# Unsupervised
+hmmlearn = "^0.3.0"
+# Data Ingestion
+requests = "^2.30.0"
+# Database
+sqlalchemy = "^2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+# Linters & Formatters
+black = "^23.3.0"
+isort = "^5.12.0"
+flake8 = "^6.0.0"
+mypy = "^1.4.0"
+# Testing
+pytest = "^7.3.0"
+pytest-cov = "^4.1.0"
+# Pre-commit
+pre-commit = "^3.3.0"
+# Notebooks
+jupyterlab = "^4.0.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311'] # Adjust to your Python versions
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.9" # Adjust
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true # Start with true, gradually make it false for your own packages
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
