@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Multi-resolution temporal ensemble for regimen shift prediction."
 authors = ["Leon Becker <leonbecker0101@gmail.com>"]
 readme = "README.md"
-packages = [{include = "regime_predictor_lib"}] # Adjusted to match structure
+packages = [{include = "regime_predictor_lib", from = "src"}] # Adjusted to match structure
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -37,6 +37,8 @@ pytest-cov = "^4.1.0"
 pre-commit = "^3.3.0"
 # Notebooks
 jupyterlab = "^4.0.0"
+# API
+yfinance = "^0.2.0"
 
 [tool.black]
 line-length = 88
