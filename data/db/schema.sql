@@ -43,3 +43,14 @@ CREATE TABLE IF NOT EXISTS volatility_indicators (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(date)
 );
+
+CREATE TABLE IF NOT EXISTS put_call_ratios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date DATE NOT NULL UNIQUE,
+    equity_call_volume INTEGER,
+    equity_put_volume INTEGER,
+    equity_total_volume INTEGER,
+    equity_pc_ratio REAL,
+    source TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
