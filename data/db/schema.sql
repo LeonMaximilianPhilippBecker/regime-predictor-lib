@@ -63,3 +63,84 @@ CREATE TABLE IF NOT EXISTS index_breadth_indicators (
     ad_ratio REAL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS non_farm_payrolls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT DEFAULT 'PAYEMS',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS initial_jobless_claims (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT DEFAULT 'ICSA',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS cpi (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT DEFAULT 'CPIAUCSL',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS gdp_forecasts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    forecast_period TEXT NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS retail_sales (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT DEFAULT 'RSAFS',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS m2_money_supply (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT DEFAULT 'M2SL',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS housing_starts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT DEFAULT 'HOUST',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS housing_prices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT DEFAULT 'CSUSHPINSA',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date, series_id)
+);
