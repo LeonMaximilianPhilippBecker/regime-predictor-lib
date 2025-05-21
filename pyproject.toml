@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Multi-resolution temporal ensemble for regimen shift prediction."
 authors = ["Leon Becker <leonbecker0101@gmail.com>"]
 readme = "README.md"
-packages = [{include = "regime_predictor_lib", from = "src"}] # Adjusted to match structure
+packages = [{include = "regime_predictor_lib", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -27,6 +27,7 @@ undetected-chromedriver = "^3.5.5"
 beautifulsoup4 = "^4.13.4"
 lxml = "^5.4.0"
 python-dotenv = "^1.1.0"
+alpha-vantage = "^3.0.0"
 
 [tool.poetry.group.dev.dependencies]
 # Linters & Formatters
@@ -45,18 +46,18 @@ jupyterlab = "^4.0.0"
 yfinance = "^0.2.0"
 
 [tool.black]
-line-length = 88
-target-version = ['py39', 'py310', 'py311'] # Adjust to your Python versions
+line-length = 100
+target-version = ['py39', 'py310', 'py311']
 
 [tool.isort]
 profile = "black"
-line_length = 88
+line_length = 100
 
 [tool.mypy]
-python_version = "3.9" # Adjust
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
-ignore_missing_imports = true # Start with true, gradually make it false for your own packages
+ignore_missing_imports = true #
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

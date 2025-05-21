@@ -54,3 +54,12 @@ CREATE TABLE IF NOT EXISTS put_call_ratios (
     source TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS index_breadth_indicators (
+    date DATE PRIMARY KEY,
+    pct_above_sma50 REAL,
+    pct_above_sma200 REAL,
+    ad_line REAL,
+    ad_ratio REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

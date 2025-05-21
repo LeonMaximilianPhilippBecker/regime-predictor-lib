@@ -10,9 +10,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -23,9 +21,7 @@ def get_project_root() -> Path:
 PROJECT_ROOT = get_project_root()
 DB_FILE = PROJECT_ROOT / "data" / "db" / "volume" / "quant.db"
 CSV_FILE_PATH = PROJECT_ROOT / "data" / "raw" / "cboe_equity_pc_ratios.csv"
-CBOE_DAILY_STATS_URL = (
-    "https://www.cboe.com/us/options/market_statistics/daily/?dt={date_str}"
-)
+CBOE_DAILY_STATS_URL = "https://www.cboe.com/us/options/market_statistics/daily/?dt={date_str}"
 
 engine = None
 SessionLocal = None
@@ -67,20 +63,14 @@ def insert_pcr_data(session, date_val, call_vol, put_vol, total_vol, pc_ratio, s
     total_vol_clean = clean_numeric_value(total_vol)
     pc_ratio_clean = clean_numeric_value(pc_ratio)
 
-    if (
-        pc_ratio_clean is None
-        and call_vol_clean is not None
-        and put_vol_clean is not None
-    ):
+    if pc_ratio_clean is None and call_vol_clean is not None and put_vol_clean is not None:
         if call_vol_clean > 0:
             pc_ratio_clean = put_vol_clean / call_vol_clean
         else:
             pc_ratio_clean = None
 
     if date_str is None or pc_ratio_clean is None:
-        logger.warning(
-            f"Skipping insertion for date {date_str} due to missing critical data."
-        )
+        logger.warning(f"Skipping insertion for date {date_str} due to missing critical data.")
         return
 
     try:
@@ -242,9 +232,7 @@ def parse_cboe_html_for_equity_options(html_content: str):
             break
 
     if not volume_row or len(volume_row) < 4:
-        logger.warning(
-            "Could not find 'VOLUME' row or not enough cells in 'EQUITY OPTIONS' table."
-        )
+        logger.warning("Could not find 'VOLUME' row or not enough cells in 'EQUITY OPTIONS' table.")
         return None
 
     try:
@@ -269,9 +257,7 @@ def parse_cboe_html_for_equity_options(html_content: str):
 
 
 def scrape_cboe_website(start_date: datetime, end_date: datetime):
-    logger.info(
-        f"Starting CBOE website scraping from {start_date.date()} to {end_date.date()}"
-    )
+    logger.info(f"Starting CBOE website scraping from {start_date.date()} to {end_date.date()}")
 
     options = uc.ChromeOptions()
     options.add_argument("--no-sandbox")
@@ -309,13 +295,10 @@ def scrape_cboe_website(start_date: datetime, end_date: datetime):
                     pc_ratio_calc,
                     "cboe_web_equity_options",
                 )
-                logger.info(
-                    f"Successfully processed and stored data for {date_str_url}"
-                )
+                logger.info(f"Successfully processed and stored data for {date_str_url}")
             else:
                 logger.warning(
-                    f"No data parsed {date_str_url}. "
-                    "Might be holiday or no data available."
+                    f"No data parsed {date_str_url}. " "Might be holiday or no data available."
                 )
 
         except Exception as e:
