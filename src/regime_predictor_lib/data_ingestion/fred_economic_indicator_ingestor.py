@@ -9,26 +9,30 @@ from .api_clients.fred_client import FredApiClient
 logger = logging.getLogger(__name__)
 
 FRED_SERIES_CONFIG = {
-    "PAYEMS": {  # Non-Farm Payrolls
+    "PAYEMS": {
         "table_name": "non_farm_payrolls",
         "conflict_columns": ["reference_date", "release_date", "series_id"],
         "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
     },
-    "ICSA": {  # Initial Jobless Claims
+    "ICSA": {
         "table_name": "initial_jobless_claims",
         "conflict_columns": ["reference_date", "release_date", "series_id"],
         "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
     },
-    "CPIAUCSL": {  # CPI
+    "CPIAUCSL": {
         "table_name": "cpi",
         "conflict_columns": ["reference_date", "release_date", "series_id"],
         "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
     },
-    "RGDPQOQFOR": {  # GDP Growth Forecasts (SPF)
+    "RGDPQOQFOR": {
         "table_name": "gdp_forecasts",
         "conflict_columns": ["reference_date", "release_date", "series_id"],
-        "preprocess_func": lambda df: df.assign(
-            forecast_period=df["reference_date"].dt.to_period("Q").astype(str)
+        "preprocess_func": lambda df: (
+            df.assign(
+                forecast_period=pd.to_datetime(df["reference_date"]).dt.to_period("Q").astype(str)
+            )
+            if "reference_date" in df and pd.api.types.is_datetime64_any_dtype(df["reference_date"])
+            else df
         ),
         "expected_db_cols": [
             "reference_date",
@@ -38,30 +42,51 @@ FRED_SERIES_CONFIG = {
             "series_id",
         ],
     },
-    "RSAFS": {  # Retail Sales
+    "RSAFS": {
         "table_name": "retail_sales",
         "conflict_columns": ["reference_date", "release_date", "series_id"],
         "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
     },
-    "M2SL": {  # M2 Money Supply
+    "M2SL": {
         "table_name": "m2_money_supply",
         "conflict_columns": ["reference_date", "release_date", "series_id"],
         "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
     },
-    "HOUST": {  # Housing Starts
+    "HOUST": {
         "table_name": "housing_starts",
         "conflict_columns": ["reference_date", "release_date", "series_id"],
         "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
     },
-    "CSUSHPINSA": {  # Housing Prices (Case-Shiller)
+    "CSUSHPINSA": {
         "table_name": "housing_prices",
         "conflict_columns": ["reference_date", "release_date", "series_id"],
         "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
     },
-    "UMCSENT": {  # Conference Board Consumer Confidence Index
+    "UMCSENT": {
         "table_name": "consumer_confidence",
         "conflict_columns": ["reference_date", "release_date", "series_id"],
         "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
+    },
+    # --- New series for spreads ---
+    "BAMLC0A0CM": {  # Corporate Bond OAS
+        "table_name": "corporate_bond_oas",
+        "conflict_columns": ["reference_date", "series_id"],  # Unique on reference_date & series_id
+        "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
+        "cleaning_strategy": "first_release",  # New key to indicate specific cleaning
+    },
+    "T10Y2Y": {  # 10Y-2Y Treasury Spread
+        "table_name": "treasury_yield_spreads",
+        "conflict_columns": ["reference_date", "series_id"],
+        "expected_db_cols": ["reference_date", "release_date", "value", "spread_type", "series_id"],
+        "preprocess_func": lambda df: df.assign(spread_type="10Y-2Y"),
+        "cleaning_strategy": "first_release",
+    },
+    "T10Y3M": {  # 10Y-3M Treasury Spread
+        "table_name": "treasury_yield_spreads",
+        "conflict_columns": ["reference_date", "series_id"],
+        "expected_db_cols": ["reference_date", "release_date", "value", "spread_type", "series_id"],
+        "preprocess_func": lambda df: df.assign(spread_type="10Y-3M"),
+        "cleaning_strategy": "first_release",
     },
 }
 
@@ -83,6 +108,54 @@ class FredEconomicIndicatorIngestor:
     ) -> pd.DataFrame | None:
         processed_df = df.copy()
 
+        if "reference_date" in processed_df.columns:
+            processed_df["reference_date"] = pd.to_datetime(
+                processed_df["reference_date"], errors="coerce"
+            )
+        if "release_date" in processed_df.columns:
+            processed_df["release_date"] = pd.to_datetime(
+                processed_df["release_date"], errors="coerce"
+            )
+
+        if config_entry.get("cleaning_strategy") == "first_release":
+            if (
+                not processed_df.empty
+                and "reference_date" in processed_df.columns
+                and "release_date" in processed_df.columns
+                and pd.api.types.is_datetime64_any_dtype(processed_df["reference_date"])
+                and pd.api.types.is_datetime64_any_dtype(processed_df["release_date"])
+            ):
+                logger.debug(
+                    f"Applying 'first_release' cleaning for {series_id}. "
+                    f"Initial rows: {len(processed_df)}"
+                )
+                processed_df.dropna(subset=["reference_date", "release_date"], inplace=True)
+
+                if not processed_df.empty:
+                    processed_df.sort_values(
+                        by=["reference_date", "release_date"], ascending=[True, True], inplace=True
+                    )
+                    processed_df = processed_df.groupby("reference_date", as_index=False).first()
+                    logger.debug(
+                        f"Rows after 'first_release' cleaning for {series_id}: {len(processed_df)}"
+                    )
+                else:
+                    logger.warning(
+                        f"DataFrame for {series_id} became empty after dropping NaT dates, "
+                        "prior to 'first_release' groupby. No data to process further for cleaning."
+                    )
+            else:
+                logger.warning(
+                    f"Cannot apply 'first_release' strategy for {series_id}: DataFrame is empty, "
+                    "or date columns are missing/not in datetime format after initial conversion."
+                )
+
+        if processed_df.empty and config_entry.get("cleaning_strategy") == "first_release":
+            logger.warning(
+                f"DataFrame for {series_id} is empty after 'first_release' attempt. Returning None."
+            )
+            return None
+
         if "preprocess_func" in config_entry and callable(config_entry["preprocess_func"]):
             try:
                 processed_df = config_entry["preprocess_func"](processed_df)
@@ -90,6 +163,15 @@ class FredEconomicIndicatorIngestor:
             except Exception as e:
                 logger.error(f"Error during preprocessing for {series_id}: {e}", exc_info=True)
                 return None
+
+        if "reference_date" in processed_df.columns and pd.api.types.is_datetime64_any_dtype(
+            processed_df["reference_date"]
+        ):
+            processed_df["reference_date"] = processed_df["reference_date"].dt.strftime("%Y-%m-%d")
+        if "release_date" in processed_df.columns and pd.api.types.is_datetime64_any_dtype(
+            processed_df["release_date"]
+        ):
+            processed_df["release_date"] = processed_df["release_date"].dt.strftime("%Y-%m-%d")
 
         expected_cols = config_entry.get("expected_db_cols")
         if not expected_cols:

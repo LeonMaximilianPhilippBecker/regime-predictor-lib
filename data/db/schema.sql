@@ -188,3 +188,35 @@ CREATE TABLE IF NOT EXISTS cnn_fear_greed_index (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(reference_date)
 );
+
+CREATE TABLE IF NOT EXISTS investment_grade_junk_bond_yield_spread (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    spread_value REAL,
+    high_yield_series_id TEXT,
+    investment_grade_series_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date, high_yield_series_id, investment_grade_series_id)
+);
+
+CREATE TABLE IF NOT EXISTS corporate_bond_oas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS treasury_yield_spreads (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    spread_type TEXT NOT NULL,
+    series_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, series_id)
+);
