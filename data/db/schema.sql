@@ -144,3 +144,47 @@ CREATE TABLE IF NOT EXISTS housing_prices (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(reference_date, release_date, series_id)
 );
+
+CREATE TABLE IF NOT EXISTS aaii_sentiment (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    bullish_pct REAL,
+    neutral_pct REAL,
+    bearish_pct REAL,
+    total_pct REAL,
+    bullish_8wk_ma_pct REAL,
+    bull_bear_spread_pct REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date)
+);
+
+CREATE TABLE IF NOT EXISTS finra_margin_statistics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    debit_balances_margin_accounts BIGINT,
+    free_credit_cash_accounts BIGINT,
+    free_credit_margin_accounts BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date)
+);
+
+CREATE TABLE IF NOT EXISTS consumer_confidence (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, release_date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS cnn_fear_greed_index (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date)
+);

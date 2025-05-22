@@ -58,6 +58,11 @@ FRED_SERIES_CONFIG = {
         "conflict_columns": ["reference_date", "release_date", "series_id"],
         "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
     },
+    "UMCSENT": {  # Conference Board Consumer Confidence Index
+        "table_name": "consumer_confidence",
+        "conflict_columns": ["reference_date", "release_date", "series_id"],
+        "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
+    },
 }
 
 
@@ -148,15 +153,40 @@ class FredEconomicIndicatorIngestor:
             )
             return False
 
-    def ingest_all_configured_series(self, inter_series_delay: float = 0.5) -> tuple[int, int]:
-        logger.info("Starting ingestion of all configured FRED economic indicators.")
-        total_series = len(self.series_config)
+    def ingest_all_configured_series(
+        self, series_ids_to_process: list[str] | None = None, inter_series_delay: float = 0.5
+    ) -> tuple[int, int]:
+        logger.info("Starting ingestion of FRED economic indicators.")
+
+        series_to_iterate = {}
+        if series_ids_to_process is None:
+            logger.info("Processing all series defined in FRED_SERIES_CONFIG.")
+            series_to_iterate = self.series_config
+        else:
+            logger.info(f"Processing specific series_ids: {series_ids_to_process}")
+            for series_id_key in series_ids_to_process:
+                if series_id_key in self.series_config:
+                    series_to_iterate[series_id_key] = self.series_config[series_id_key]
+                else:
+                    logger.warning(
+                        f"Series ID '{series_id_key}' provided in series_ids_to_process "
+                        f"but not found in FRED_SERIES_CONFIG. Skipping."
+                    )
+            if not series_to_iterate:
+                logger.warning("No valid series found to process based on series_ids_to_process.")
+                return 0, 0
+
+        total_series_to_process = len(series_to_iterate)
+        if total_series_to_process == 0:
+            logger.info("No series selected for processing.")
+            return 0, 0
+
         success_count = 0
         failure_count = 0
 
-        for i, (series_id, config_entry) in enumerate(self.series_config.items()):
+        for i, (series_id, config_entry) in enumerate(series_to_iterate.items()):
             logger.info(
-                f"Processing series {i + 1}/{total_series}: {series_id} "
+                f"Processing series {i + 1}/{total_series_to_process}: {series_id} "
                 f"-> table '{config_entry['table_name']}'"
             )
 
@@ -165,7 +195,7 @@ class FredEconomicIndicatorIngestor:
             else:
                 failure_count += 1
 
-            if i < total_series - 1 and inter_series_delay > 0:
+            if i < total_series_to_process - 1 and inter_series_delay > 0:
                 logger.debug(f"Waiting {inter_series_delay}s before next series request...")
                 time.sleep(inter_series_delay)
 
