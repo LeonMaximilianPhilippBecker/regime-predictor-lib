@@ -220,3 +220,36 @@ CREATE TABLE IF NOT EXISTS treasury_yield_spreads (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(reference_date, series_id)
 );
+
+CREATE TABLE IF NOT EXISTS em_corporate_vs_tbill_spread (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    spread_value REAL,
+    em_yield_series_id TEXT,
+    tbill_yield_series_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, em_yield_series_id, tbill_yield_series_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS relative_strength_metrics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date DATE NOT NULL,
+    comparison_pair TEXT NOT NULL,
+    index_a_ticker TEXT NOT NULL,
+    index_b_ticker TEXT NOT NULL,
+    rs_ratio REAL,
+
+    log_diff_1d REAL,              -- log(rs_ratio_t) - log(rs_ratio_t-1)
+    log_diff_5d REAL,              -- log(rs_ratio_t) - log(rs_ratio_t-5)
+    log_diff_20d REAL,             -- log(rs_ratio_t) - log(rs_ratio_t-20)
+
+    return_spread_1d REAL,
+
+    z_score_spread_1d_window20d REAL,
+    z_score_spread_1d_window60d REAL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(date, comparison_pair)
+);
