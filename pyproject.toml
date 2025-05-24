@@ -11,6 +11,7 @@ python = "^3.10"
 numpy = "^1.23.0"
 pandas = "^2.0.0"
 scikit-learn = "^1.2.0"
+scipy = "^1.10.0"
 # Forest Models
 xgboost = "^1.7.0"
 catboost = "^1.2.0"

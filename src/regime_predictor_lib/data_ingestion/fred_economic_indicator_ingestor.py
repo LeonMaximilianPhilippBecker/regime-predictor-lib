@@ -88,6 +88,30 @@ FRED_SERIES_CONFIG = {
         "preprocess_func": lambda df: df.assign(spread_type="10Y-3M"),
         "cleaning_strategy": "first_release",
     },
+    "DTWEXBGS": {  # Broad Trade-Weighted USD Index
+        "table_name": "dxy_raw_fred",
+        "conflict_columns": ["reference_date", "series_id"],
+        "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
+        "cleaning_strategy": "first_release",
+    },
+    "DTWEXM": {  # Major Currencies USD Index (Alternative DXY)
+        "table_name": "dxy_raw_fred",
+        "conflict_columns": ["reference_date", "series_id"],
+        "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
+        "cleaning_strategy": "first_release",
+    },
+    "DCOILWTICO": {  # WTI Crude Oil Spot Price
+        "table_name": "oil_raw_fred",
+        "conflict_columns": ["reference_date", "series_id"],
+        "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
+        "cleaning_strategy": "first_release",
+    },
+    "DCOILBRENTEU": {  # Brent Crude Oil Spot Price
+        "table_name": "oil_raw_fred",
+        "conflict_columns": ["reference_date", "series_id"],
+        "expected_db_cols": ["reference_date", "release_date", "value", "series_id"],
+        "cleaning_strategy": "first_release",
+    },
 }
 
 

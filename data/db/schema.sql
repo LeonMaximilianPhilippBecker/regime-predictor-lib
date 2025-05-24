@@ -253,3 +253,93 @@ CREATE TABLE IF NOT EXISTS relative_strength_metrics (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(date, comparison_pair)
 );
+
+CREATE TABLE IF NOT EXISTS dxy_raw_fred (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS dxy_signals (
+    date DATE NOT NULL,
+    series_id TEXT,
+    dxy_value REAL,
+    pct_change_21d REAL,
+    z_score_return_3m REAL,
+    percentile_rank_1y REAL,
+    volatility_30d REAL,
+    slope_30d_regression REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS em_equity_ohlcv_raw (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date DATE NOT NULL,
+    symbol TEXT NOT NULL,
+    open REAL,
+    high REAL,
+    low REAL,
+    close REAL,
+    adjusted_close REAL,
+    volume INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(date, symbol)
+);
+
+CREATE TABLE IF NOT EXISTS em_equity_signals (
+    date DATE NOT NULL,
+    symbol TEXT NOT NULL,
+    close_price REAL,
+    pct_return_21d REAL,
+    z_score_return_3m REAL,
+    above_sma_200 INTEGER,
+    relative_performance_spy REAL,
+    beta_to_spy_90d REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (date, symbol)
+);
+
+CREATE TABLE IF NOT EXISTS oil_raw_fred (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference_date DATE NOT NULL,
+    release_date DATE NOT NULL,
+    value REAL,
+    series_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(reference_date, series_id)
+);
+
+CREATE TABLE IF NOT EXISTS oil_price_signals (
+    date DATE NOT NULL,
+    symbol TEXT NOT NULL,
+    price REAL,
+    pct_change_1m REAL,
+    pct_change_6m REAL,
+    z_score_return_3m REAL,
+    volatility_30d REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (date, symbol)
+);
+
+CREATE TABLE IF NOT EXISTS bdi_signals (
+    date DATE PRIMARY KEY,
+    bdi_value REAL,
+    pct_change_1m REAL,
+    z_score_return_3m REAL,
+    ema_30_minus_ema_90 REAL,
+    bdi_oil_ratio REAL,
+    oil_symbol_for_ratio TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS bdi_raw_csv (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date DATE NOT NULL UNIQUE,
+    value REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
