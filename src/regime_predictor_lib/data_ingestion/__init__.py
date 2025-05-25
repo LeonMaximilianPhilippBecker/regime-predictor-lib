@@ -4,6 +4,7 @@ from .bdi_ingestor import BdiIngestor
 from .cnn_fear_greed_ingestor import CnnFearGreedIngestor
 from .finra_margin_ingestor import FinraMarginIngestor
 from .fred_economic_indicator_ingestor import FredEconomicIndicatorIngestor
+from .gex_csv_ingestor import GexCsvIngestor
 
 __all__ = [
     "BaseAPIClient",
@@ -15,4 +16,5 @@ __all__ = [
     "FinraMarginIngestor",
     "CnnFearGreedIngestor",
     "BdiIngestor",
+    "GexCsvIngestor",
 ]

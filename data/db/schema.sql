@@ -343,3 +343,11 @@ CREATE TABLE IF NOT EXISTS bdi_raw_csv (
     value REAL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS gex_signals (
+    date DATE PRIMARY KEY,
+    gex_value REAL,
+    gex_percentile_rank_1y REAL,
+    gex_z_score_3m REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
