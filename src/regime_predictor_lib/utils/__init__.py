@@ -5,6 +5,7 @@ from .financial_calculations import (
     calculate_sma,
     calculate_sma_crossover_signal,
     calculate_value_vs_sma_signal,
+    calculate_z_score,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "calculate_sma",
     "calculate_value_vs_sma_signal",
     "calculate_sma_crossover_signal",
+    "calculate_z_score",
 ]

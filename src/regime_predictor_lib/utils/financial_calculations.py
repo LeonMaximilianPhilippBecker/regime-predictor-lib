@@ -42,3 +42,17 @@ def calculate_sma_crossover_signal(sma_short: pd.Series, sma_long: pd.Series) ->
     if not sma_short.empty and not sma_long.empty:
         signal = np.sign(sma_short - sma_long)
     return signal.astype("Int64")
+
+
+def calculate_z_score(series: pd.Series, window: int, min_periods: int | None = None) -> pd.Series:
+    if min_periods is None:
+        min_periods = window // 2
+    if series.empty or len(series) < min_periods:
+        return pd.Series(index=series.index, dtype=float)
+
+    rolling_mean = series.rolling(window=window, min_periods=min_periods).mean()
+    rolling_std = series.rolling(window=window, min_periods=min_periods).std()
+
+    z_score = (series - rolling_mean) / rolling_std
+    z_score.replace([np.inf, -np.inf], np.nan, inplace=True)
+    return z_score

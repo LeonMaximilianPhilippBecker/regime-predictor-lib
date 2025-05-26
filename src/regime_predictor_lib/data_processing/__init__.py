@@ -4,6 +4,7 @@ from .dxy_calculator import DxyCalculator
 from .emerging_market_equity_calculator import EmergingMarketEquityCalculator
 from .gex_calculator import GexCalculator
 from .index_breadth_calculator import IndexBreadthCalculator
+from .intermarket_analyzer import IntermarketAnalyzer  # Add this line
 from .oil_price_calculator import OilPriceCalculator
 from .relative_strength_calculator import RelativeStrengthCalculator
 from .sentiment_confidence_calculator import SentimentConfidenceCalculator
@@ -26,4 +27,5 @@ __all__ = [
     "GexCalculator",
     "SentimentConfidenceCalculator",
     "SmartMoneyIndexCalculator",
+    "IntermarketAnalyzer",
 ]

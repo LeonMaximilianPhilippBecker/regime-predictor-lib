@@ -398,3 +398,35 @@ CREATE TABLE IF NOT EXISTS smart_money_index (
     smi_percentile_504d REAL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS intermarket_stock_bond_returns_diff (
+    date DATE PRIMARY KEY,
+    return_diff_20d REAL,
+    return_diff_20d_sma_20 REAL,
+    return_diff_20d_sma_50 REAL,
+    return_diff_20d_zscore_63d REAL,
+    return_diff_20d_zscore_252d REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS intermarket_ratios (
+    date DATE NOT NULL,
+    ratio_name TEXT NOT NULL,
+    numerator_ticker TEXT NOT NULL,
+    denominator_ticker TEXT NOT NULL,
+    raw_ratio REAL,
+    roc_21d REAL,
+    roc_63d REAL,
+    roc_126d REAL,
+    roc_252d REAL,
+    sma_20d REAL,
+    sma_50d REAL,
+    sma_200d REAL,
+    zscore_value_63d REAL,
+    zscore_value_252d REAL,
+    percentile_1y REAL,
+    vs_sma20_signal INTEGER,
+    sma20_vs_sma50_signal INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (date, ratio_name)
+);
