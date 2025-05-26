@@ -6,6 +6,8 @@ from .gex_calculator import GexCalculator
 from .index_breadth_calculator import IndexBreadthCalculator
 from .oil_price_calculator import OilPriceCalculator
 from .relative_strength_calculator import RelativeStrengthCalculator
+from .sentiment_confidence_calculator import SentimentConfidenceCalculator
+from .smart_money_index_calculator import SmartMoneyIndexCalculator
 from .sp500_historical_data_processor import SP500HistoricalDataProcessor
 from .technical_indicator_calculator import TechnicalIndicatorCalculator
 from .volatility_calculator import VolatilityCalculator
@@ -22,4 +24,6 @@ __all__ = [
     "OilPriceCalculator",
     "BalticDryIndexCalculator",
     "GexCalculator",
+    "SentimentConfidenceCalculator",
+    "SmartMoneyIndexCalculator",
 ]

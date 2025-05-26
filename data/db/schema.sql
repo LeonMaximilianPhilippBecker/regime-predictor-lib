@@ -351,3 +351,50 @@ CREATE TABLE IF NOT EXISTS gex_signals (
     gex_z_score_3m REAL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS sentiment_confidence_indices (
+    date DATE PRIMARY KEY,
+    smci_value REAL,
+    dmci_value REAL,
+    smci_pct_dmci_ratio REAL,
+    smci_value_roc_1m REAL,
+    smci_value_roc_3m REAL,
+    smci_value_roc_6m REAL,
+    dmci_value_roc_1m REAL,
+    dmci_value_roc_3m REAL,
+    dmci_value_roc_6m REAL,
+    smci_pct_dmci_ratio_roc_1m REAL,
+    smci_pct_dmci_ratio_roc_3m REAL,
+    smci_pct_dmci_ratio_roc_6m REAL,
+    smci_value_sma_3m REAL,
+    smci_value_sma_6m REAL,
+    dmci_value_sma_3m REAL,
+    dmci_value_sma_6m REAL,
+    smci_pct_dmci_ratio_sma_3m REAL,
+    smci_pct_dmci_ratio_sma_6m REAL,
+    smci_value_percentile_1y REAL,
+    smci_value_percentile_2y REAL,
+    dmci_value_percentile_1y REAL,
+    dmci_value_percentile_2y REAL,
+    smci_pct_dmci_ratio_percentile_1y REAL,
+    smci_pct_dmci_ratio_percentile_2y REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS smart_money_index (
+    date DATE PRIMARY KEY,
+    smi_value REAL,
+    spy_open REAL,
+    spy_close REAL,
+    smi_roc_21d REAL,
+    smi_roc_63d REAL,
+    smi_roc_126d REAL,
+    smi_sma_20d REAL,
+    smi_sma_50d REAL,
+    smi_sma_200d REAL,
+    smi_vs_sma20_signal INTEGER,
+    smi_sma20_vs_sma50_signal INTEGER,
+    smi_percentile_252d REAL,
+    smi_percentile_504d REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
