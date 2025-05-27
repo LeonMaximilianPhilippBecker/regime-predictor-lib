@@ -9,6 +9,7 @@ from .oil_price_calculator import OilPriceCalculator
 from .relative_strength_calculator import RelativeStrengthCalculator
 from .sentiment_confidence_calculator import SentimentConfidenceCalculator
 from .smart_money_index_calculator import SmartMoneyIndexCalculator
+from .sp500_derived_indicator_calculator import SP500DerivedIndicatorCalculator
 from .sp500_historical_data_processor import SP500HistoricalDataProcessor
 from .technical_indicator_calculator import TechnicalIndicatorCalculator
 from .volatility_calculator import VolatilityCalculator
@@ -28,4 +29,5 @@ __all__ = [
     "SentimentConfidenceCalculator",
     "SmartMoneyIndexCalculator",
     "IntermarketAnalyzer",
+    "SP500DerivedIndicatorCalculator",
 ]

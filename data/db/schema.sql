@@ -430,3 +430,39 @@ CREATE TABLE IF NOT EXISTS intermarket_ratios (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (date, ratio_name)
 );
+
+CREATE TABLE IF NOT EXISTS sp500_derived_indicators (
+    date DATE PRIMARY KEY,
+    sp500_open REAL,
+    sp500_high REAL,
+    sp500_low REAL,
+    sp500_close REAL,
+    sp500_adjusted_close REAL,
+    sp500_volume INTEGER,
+
+    ret_1d REAL,
+    ret_5d REAL,
+    ret_21d REAL,
+    ret_63d REAL,
+    ret_126d REAL,
+
+    log_vol_1d REAL,
+    log_vol_5d REAL,
+    log_vol_21d REAL,
+    log_vol_63d REAL,
+    log_vol_126d REAL,
+
+    ret_1d_zscore_63d REAL,
+    ret_5d_zscore_63d REAL,
+    ret_21d_zscore_63d REAL,
+    ret_63d_zscore_63d REAL,
+    ret_126d_zscore_63d REAL,
+
+    log_vol_1d_zscore_63d REAL,
+    log_vol_5d_zscore_63d REAL,
+    log_vol_21d_zscore_63d REAL,
+    log_vol_63d_zscore_63d REAL,
+    log_vol_126d_zscore_63d REAL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
