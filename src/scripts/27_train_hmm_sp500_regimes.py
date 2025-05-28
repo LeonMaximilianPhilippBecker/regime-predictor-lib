@@ -15,15 +15,21 @@ DB_DIR = PROJECT_ROOT_PATH / "data" / "db" / "volume"
 DB_PATH = DB_DIR / "quant.db"
 SCHEMA_PATH = PROJECT_ROOT_PATH / "data" / "db" / "schema.sql"
 
-MODELS_OUTPUT_DIR = PROJECT_ROOT_PATH / "data" / "models" / "hmm"
-RESULTS_OUTPUT_DIR = PROJECT_ROOT_PATH / "data" / "processed" / "regime_identification"
+MODELS_OUTPUT_DIR = PROJECT_ROOT_PATH / "data" / "models" / "hmm" / "smoothed"
+RESULTS_OUTPUT_DIR = PROJECT_ROOT_PATH / "data" / "processed" / "regime_identification" / "smoothed"
 
-ANALYSIS_NAME = "sp500_ret252d_logvol126d_3states"
+
+ANALYSIS_NAME = "sp500_ret126d_logvol21d_3states"
 FEATURES_TO_USE = ["ret_126d", "log_vol_21d"]
 N_HMM_STATES = 3
+SMOOTHING_WINDOW = 200
 
 if __name__ == "__main__":
     logger.info(f"Starting HMM regime identification script: {ANALYSIS_NAME}")
+    if SMOOTHING_WINDOW is not None and SMOOTHING_WINDOW > 1:
+        logger.info(f"Regime smoothing will be applied with window: {SMOOTHING_WINDOW}")
+    else:
+        logger.info("No regime smoothing will be applied.")
 
     DB_DIR.mkdir(parents=True, exist_ok=True)
     MODELS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -47,6 +53,7 @@ if __name__ == "__main__":
         model_output_dir=MODELS_OUTPUT_DIR,
         results_output_dir=RESULTS_OUTPUT_DIR,
         n_hmm_states=N_HMM_STATES,
+        smoothing_window_size=SMOOTHING_WINDOW,
     )
 
     try:
