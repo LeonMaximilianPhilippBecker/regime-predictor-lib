@@ -11,8 +11,16 @@ logger = logging.getLogger(__name__)
 ANNUALIZATION_FACTOR = 252
 ZSCORE_WINDOW = 63
 
-RETURN_PERIODS = {"1d": 1, "5d": 5, "21d": 21, "63d": 63, "126d": 126}
-VOL_PERIODS = {"1d": 1, "5d": 5, "21d": 21, "63d": 63, "126d": 126}
+RETURN_PERIODS = {
+    "1d": 1,
+    "5d": 5,
+    "21d": 21,
+    "63d": 63,
+    "126d": 126,
+    "252d": 252,
+    "512d": 512,
+}
+VOL_PERIODS = {"1d": 1, "5d": 5, "21d": 21, "63d": 63, "126d": 126, "252d": 252}
 
 
 class SP500DerivedIndicatorCalculator:
@@ -28,7 +36,7 @@ class SP500DerivedIndicatorCalculator:
 
         max_lookback = max(max(VOL_PERIODS.values()), max(RETURN_PERIODS.values()), ZSCORE_WINDOW)
         buffer_start_date = (
-            pd.to_datetime(start_date_str) - pd.DateOffset(days=max_lookback * 2)
+            pd.to_datetime(start_date_str) - pd.DateOffset(days=max_lookback * 2 + 50)
         ).strftime("%Y-%m-%d")
 
         logger.info(f"Fetching S&P 500 data ({ticker}) from {buffer_start_date} to {end_date_str}")
@@ -122,27 +130,37 @@ class SP500DerivedIndicatorCalculator:
             "ret_21d",
             "ret_63d",
             "ret_126d",
+            "ret_252d",
+            "ret_512d",
             "log_vol_1d",
             "log_vol_5d",
             "log_vol_21d",
             "log_vol_63d",
             "log_vol_126d",
+            "log_vol_252d",
             "ret_1d_zscore_63d",
             "ret_5d_zscore_63d",
             "ret_21d_zscore_63d",
             "ret_63d_zscore_63d",
             "ret_126d_zscore_63d",
+            "ret_252d_zscore_63d",
+            "ret_512d_zscore_63d",
             "log_vol_1d_zscore_63d",
             "log_vol_5d_zscore_63d",
             "log_vol_21d_zscore_63d",
             "log_vol_63d_zscore_63d",
             "log_vol_126d_zscore_63d",
+            "log_vol_252d_zscore_63d",
         ]
         for col in expected_cols:
             if col not in indicators_df.columns:
                 indicators_df[col] = np.nan
 
-        final_df = indicators_df[expected_cols]
+        current_cols = indicators_df.columns.tolist()
+        final_cols_ordered = [col for col in expected_cols if col in current_cols]
+        final_cols_ordered.extend([col for col in current_cols if col not in final_cols_ordered])
+
+        final_df = indicators_df[final_cols_ordered]
 
         logger.info(f"Calculated S&P 500 derived indicators. Shape: {final_df.shape}")
         return final_df

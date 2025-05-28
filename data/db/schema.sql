@@ -445,24 +445,30 @@ CREATE TABLE IF NOT EXISTS sp500_derived_indicators (
     ret_21d REAL,
     ret_63d REAL,
     ret_126d REAL,
+    ret_252d REAL,
+    "ret_512d" REAL,
 
     log_vol_1d REAL,
     log_vol_5d REAL,
     log_vol_21d REAL,
     log_vol_63d REAL,
     log_vol_126d REAL,
+    log_vol_252d REAL,
 
     ret_1d_zscore_63d REAL,
     ret_5d_zscore_63d REAL,
     ret_21d_zscore_63d REAL,
     ret_63d_zscore_63d REAL,
     ret_126d_zscore_63d REAL,
+    ret_252d_zscore_63d REAL,
+    ret_512d_zscore_63d REAL,
 
     log_vol_1d_zscore_63d REAL,
     log_vol_5d_zscore_63d REAL,
     log_vol_21d_zscore_63d REAL,
     log_vol_63d_zscore_63d REAL,
     log_vol_126d_zscore_63d REAL,
+    log_vol_252d_zscore_63d REAL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
