@@ -49,12 +49,12 @@ jupyterlab = "^4.0.0"
 yfinance = "^0.2.0"
 
 [tool.black]
-line-length = 100
+line-length = 112
 target-version = ['py39', 'py310', 'py311']
 
 [tool.isort]
 profile = "black"
-line_length = 100
+line_length = 112
 
 [tool.mypy]
 python_version = "3.9"
