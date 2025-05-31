@@ -1,3 +1,4 @@
+from .feature_reducer import FeatureReducer
 from .master_feature_constructor import MasterFeatureConstructor
 from .stationarity_analyzer import StationarityAnalyzer
 from .stationarity_selector import StationarityBasedFeatureSelector
@@ -8,4 +9,5 @@ __all__ = [
     "MasterFeatureConstructor",
     "StationarityBasedFeatureSelector",
     "ThematicFeatureTableCreator",
+    "FeatureReducer",
 ]
