@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from sklearn.metrics import auc, roc_curve
 
@@ -93,5 +94,41 @@ def plot_feature_importances(importance_df, top_n=20, title="Feature Importances
     ax.set_title(title, fontsize=14)
     ax.set_xlabel("Importance Score", fontsize=12)
     ax.grid(True, axis="x", linestyle="--", alpha=0.6)
+    plt.tight_layout()
+    return fig
+
+
+def plot_feature_importance_stability(
+    mda_per_fold_df: pd.DataFrame, top_n: int = 25, title="Feature Importance Stability"
+):
+    if mda_per_fold_df.empty:
+        fig, ax = plt.subplots()
+        ax.text(0.5, 0.5, "No MDA results available.", ha="center", va="center")
+        ax.set_title(title)
+        return fig
+
+    mean_importances = mda_per_fold_df.groupby("feature")["importance"].mean().sort_values(ascending=False)
+    top_features = mean_importances.head(top_n).index.tolist()
+
+    df_top = mda_per_fold_df[mda_per_fold_df["feature"].isin(top_features)]
+
+    fig, ax = plt.subplots(figsize=(12, max(8, len(top_features) * 0.4)))
+    sns.boxplot(
+        x="importance",
+        y="feature",
+        data=df_top,
+        order=top_features,
+        orient="h",
+        palette="viridis",
+        ax=ax,
+    )
+
+    ax.set_title(title, fontsize=16, pad=20)
+    ax.set_xlabel("MDA Importance (Increase in LogLoss)", fontsize=12)
+    ax.set_ylabel("Feature", fontsize=12)
+    ax.grid(True, axis="x", linestyle="--", alpha=0.6)
+    ax.axvline(x=0, color="r", linestyle="--", linewidth=1.2, label="Zero Importance")
+    ax.legend(loc="lower right")
+
     plt.tight_layout()
     return fig

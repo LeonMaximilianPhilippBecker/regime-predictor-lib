@@ -1,15 +1,16 @@
 import logging
 import pickle
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
 import pandas as pd
+from sklearn.metrics import log_loss
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.class_weight import compute_sample_weight
 
 from ..evaluation.metrics import calculate_classification_metrics
+from ..feature_importance.mda import calculate_mean_decrease_accuracy
 from ..models.base import AbstractModel
 from ..results.result_saver import ResultSaver
 
@@ -21,21 +22,19 @@ class ModelTrainer:
         self,
         model_wrapper: AbstractModel,
         cv_splitter: BaseCrossValidator,
-        scorers: Dict[str, Callable],
         result_saver: ResultSaver,
         theme_name: str,
-        model_config_name: str,
         label_encoder: Optional[LabelEncoder] = None,
     ):
         self.model_wrapper = model_wrapper
         self.cv_splitter = cv_splitter
-        self.scorers = scorers
         self.result_saver = result_saver
         self.theme_name = theme_name
         self.model_config_name = model_wrapper.model_name
         self.label_encoder = label_encoder
 
         self.cv_fold_metrics: List[Dict[str, Any]] = []
+        self.mda_fold_results: List[pd.DataFrame] = []
         self.oof_predictions: Optional[pd.DataFrame] = None
         self.trained_final_model: Optional[AbstractModel] = None
         self.training_logs: str = ""
@@ -65,6 +64,8 @@ class ModelTrainer:
         groups: Optional[pd.Series] = None,
         fit_params: Optional[Dict[str, Any]] = None,
         use_class_weights: bool = True,
+        run_mda: bool = True,
+        mda_n_repeats: int = 5,
     ) -> Dict[str, Any]:
         self._log(f"Starting cross-validation for {self.model_config_name} on {self.theme_name}...")
         if fit_params is None:
@@ -73,8 +74,8 @@ class ModelTrainer:
         oof_index = X.index
         if not isinstance(oof_index, pd.DatetimeIndex):
             self._log(
-                "Warning: X.index is not a DatetimeIndex "
-                f"(type: {type(oof_index).__name__}). OOF results will use this index.",
+                f"Warning: X.index is not a DatetimeIndex (type: {type(oof_index).__name__})."
+                f" OOF results will use this index.",
                 logging.WARNING,
             )
 
@@ -82,12 +83,9 @@ class ModelTrainer:
         if self.label_encoder:
             class_labels_encoded = list(range(len(self.label_encoder.classes_)))
 
-        oof_preds_list = []
-        oof_probas_list = []
-        oof_indices_list = []
-        oof_true_list = []
-
+        oof_preds_list, oof_probas_list, oof_indices_list, oof_true_list = [], [], [], []
         self.cv_fold_metrics = []
+        self.mda_fold_results = []
 
         for fold_idx, (train_indices, val_indices) in enumerate(
             self.cv_splitter.split(X, y_processed, groups=groups)
@@ -96,12 +94,8 @@ class ModelTrainer:
 
             if len(train_indices) == 0 or len(val_indices) == 0:
                 self._log(
-                    f"Skipping fold {fold_idx + 1} due to empty train or validation set.",
-                    logging.WARNING,
+                    f"Skipping fold {fold_idx + 1} due to empty train or validation set.", logging.WARNING
                 )
-                fold_metrics_results = {metric_name: np.nan for metric_name in self.scorers.keys()}
-                fold_metrics_results["fold"] = fold_idx + 1
-                self.cv_fold_metrics.append(fold_metrics_results)
                 continue
 
             X_train_fold, X_val_fold = X.iloc[train_indices], X.iloc[val_indices]
@@ -109,19 +103,13 @@ class ModelTrainer:
 
             sample_weight_train_fold = None
             if use_class_weights:
-                self._log("Calculating sample weights for training fold.")
                 sample_weight_train_fold = pd.Series(
                     compute_sample_weight(class_weight="balanced", y=y_train_fold), index=y_train_fold.index
-                )
-                self._log(
-                    f"Sample weights computed. Min: "
-                    f"{sample_weight_train_fold.min():.2f}, Max: {sample_weight_train_fold.max():.2f}"
                 )
 
             start_time = time.time()
             current_model = self.model_wrapper
             current_model.set_params(**self.model_wrapper.get_params())
-
             current_model.fit(
                 X_train_fold,
                 y_train_fold,
@@ -137,17 +125,16 @@ class ModelTrainer:
             y_proba_val = current_model.predict_proba(X_val_fold)
 
             current_val_indices = oof_index[val_indices]
-
             oof_indices_list.append(current_val_indices)
             oof_true_list.append(y_val_fold)
             oof_preds_list.append(pd.Series(y_pred_val, index=current_val_indices))
-
-            proba_df_fold = pd.DataFrame(
-                y_proba_val,
-                index=current_val_indices,
-                columns=[f"proba_class_{i}" for i in range(y_proba_val.shape[1])],
+            oof_probas_list.append(
+                pd.DataFrame(
+                    y_proba_val,
+                    index=current_val_indices,
+                    columns=[f"proba_class_{i}" for i in class_labels_encoded],
+                )
             )
-            oof_probas_list.append(proba_df_fold)
 
             fold_metrics_results = calculate_classification_metrics(
                 y_val_fold, y_pred_val, y_proba_val, labels=class_labels_encoded
@@ -156,47 +143,68 @@ class ModelTrainer:
             fold_metrics_results["training_time_seconds"] = train_time
             self.cv_fold_metrics.append(fold_metrics_results)
             self._log(
-                f"Fold {fold_idx + 1} metrics: "
-                f"{ {k: f'{v:.4f}' if isinstance(v, float) else v for k, v in fold_metrics_results.items()} }"
+                f"Fold {fold_idx + 1} metrics:"
+                f" { {k: f'{v:.4f}' if isinstance(v, float) else v for k, v in fold_metrics_results.items()} }"
+            )
+
+            if run_mda:
+                try:
+                    baseline_logloss = log_loss(y_val_fold, y_proba_val, labels=class_labels_encoded)
+                    self._log(f"Fold {fold_idx + 1} baseline log_loss for MDA: {baseline_logloss:.4f}")
+
+                    mda_scores_fold = calculate_mean_decrease_accuracy(
+                        model=current_model,
+                        X_val=X_val_fold,
+                        y_val=y_val_fold,
+                        metric_func=log_loss,
+                        baseline_score=baseline_logloss,
+                        labels=class_labels_encoded,
+                        n_repeats=mda_n_repeats,
+                        higher_is_better=False,
+                    )
+
+                    mda_df_fold = mda_scores_fold.reset_index()
+                    mda_df_fold.columns = ["feature", "importance"]
+                    mda_df_fold["fold"] = fold_idx + 1
+                    self.mda_fold_results.append(mda_df_fold)
+                    self._log(f"Fold {fold_idx + 1} MDA calculated. Top 3: {mda_scores_fold.head(3).to_dict()}")
+                except ValueError as e:
+                    self._log(f"Could not run MDA for fold {fold_idx + 1}: {e}", logging.ERROR)
+
+        # Aggregate and Save Results
+        if self.mda_fold_results:
+            all_mda_df = pd.concat(self.mda_fold_results, ignore_index=True)
+            self.result_saver.save_mda_results(
+                theme_name=self.theme_name, model_name=self.model_config_name, mda_df=all_mda_df
             )
 
         if oof_preds_list:
-            oof_true_combined = pd.concat(oof_true_list)
-            oof_true_combined.index.name = oof_index.name if oof_index.name else "date"
-            oof_true_combined = oof_true_combined.rename("true_label")
-
+            oof_true_combined = pd.concat(oof_true_list).rename("true_label")
             oof_pred_combined = pd.concat(oof_preds_list).rename("predicted_label")
             oof_proba_combined = pd.concat(oof_probas_list)
-
             self.oof_predictions = pd.concat([oof_true_combined, oof_pred_combined, oof_proba_combined], axis=1)
 
-            if self.label_encoder and "true_label" in self.oof_predictions:
+            if self.label_encoder:
                 self.oof_predictions["true_label_orig"] = self.label_encoder.inverse_transform(
                     self.oof_predictions["true_label"].astype(int)
                 )
-            if self.label_encoder and "predicted_label" in self.oof_predictions:
                 self.oof_predictions["predicted_label_orig"] = self.label_encoder.inverse_transform(
                     self.oof_predictions["predicted_label"].astype(int)
                 )
 
-            self._log(f"OOF predictions consolidated. Shape: {self.oof_predictions.shape}")
-
         cv_metrics_df = pd.DataFrame(self.cv_fold_metrics)
         aggregated_metrics = {}
         for col in cv_metrics_df.columns:
-            if col not in ["fold"] and pd.api.types.is_numeric_dtype(cv_metrics_df[col]):
+            if col != "fold" and pd.api.types.is_numeric_dtype(cv_metrics_df[col]):
                 aggregated_metrics[f"{col}_mean"] = cv_metrics_df[col].mean()
                 aggregated_metrics[f"{col}_std"] = cv_metrics_df[col].std()
 
-        self._log(f"Aggregated CV Metrics: {aggregated_metrics}")
-
-        oof_df_to_save = self.oof_predictions.reset_index() if self.oof_predictions is not None else None
         self.result_saver.save_cv_metrics(
             theme_name=self.theme_name,
             model_name=self.model_config_name,
             fold_metrics_df=cv_metrics_df,
             aggregated_metrics_dict=aggregated_metrics,
-            oof_predictions_df=oof_df_to_save,
+            oof_predictions_df=self.oof_predictions.reset_index() if self.oof_predictions is not None else None,
         )
         self.result_saver.save_training_log(
             theme_name=self.theme_name, model_name=self.model_config_name, log_content=self.training_logs

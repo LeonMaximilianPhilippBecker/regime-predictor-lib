@@ -33,7 +33,7 @@ THEMATIC_FEATURE_LISTS_DIR = (
 )
 
 if INCLUDE_CURRENT_REGIME_FEATURE:
-    experiment_name = "thematic_models"
+    experiment_name = "thematic_models_with_regime_t"
     logger.info("RUNNING EXPERIMENT: Including 'regime_t' as a feature.")
 else:
     experiment_name = "thematic_models"
@@ -99,12 +99,9 @@ def main():
         features_to_use = [f for f in candidate_features if f in df_theme.columns]
 
         if INCLUDE_CURRENT_REGIME_FEATURE:
-            if "regime_t" in df_theme.columns:
-                if "regime_t" not in features_to_use:
-                    features_to_use.append("regime_t")
-                    logger.info("Added 'regime_t' to the feature set for this run.")
-            else:
-                logger.warning("'regime_t' column not found in table, cannot include as feature.")
+            if "regime_t" in df_theme.columns and "regime_t" not in features_to_use:
+                features_to_use.append("regime_t")
+                logger.info("Added 'regime_t' to the feature set for this run.")
 
         if not features_to_use:
             logger.warning(f"No candidate features for theme '{theme_name}' found in its table. Skipping.")
@@ -113,17 +110,17 @@ def main():
         logger.info(f"Feature set for '{theme_name}': {len(features_to_use)} features.")
 
         df_theme.dropna(subset=[target_col], inplace=True)
+        df_model_data = df_theme[features_to_use + [target_col]].copy()
 
-        X = df_theme[features_to_use].copy()
-        y = df_theme[target_col].copy()
+        X = df_model_data[features_to_use]
+        y = df_model_data[target_col]
 
         X.replace([np.inf, -np.inf], np.nan, inplace=True)
-
         X.ffill(inplace=True)
+        nan_rows_after = X.isnull().any(axis=1).sum()
 
-        if X.isnull().values.any():
-            nan_count = X.isnull().sum().sum()
-            logger.info(f"{nan_count} leading NaNs will be passed directly to the model.")
+        if nan_rows_after > 0:
+            logger.info(f"{nan_rows_after} leading NaNs remain after ffill. Passing to model.")
 
         if not is_encoder_fitted:
             y_unique = y.dropna().unique()
@@ -148,10 +145,8 @@ def main():
         trainer = ModelTrainer(
             model_wrapper=model_wrapper,
             cv_splitter=cv_splitter,
-            scorers={},
             result_saver=result_saver,
             theme_name=theme_table_name,
-            model_config_name=model_type,
             label_encoder=shared_label_encoder,
         )
 
