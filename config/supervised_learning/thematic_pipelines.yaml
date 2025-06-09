@@ -1,0 +1,137 @@
+
+theme_simple_technical_trend_and_momentum_signals:
+  description: "Models based on simple technical trend and momentum signals from S&P 500."
+  features_from_list: "theme_simple_technical_trend_and_momentum_signals_selected_features.txt"
+  target_column: "regime_t_plus_6m"
+  models_to_run:
+    - xgboost
+    - lightgbm_dart
+    - catboost
+  cv_params:
+    n_splits: 5
+  model_params_override:
+    xgboost:
+      n_estimators: 250
+      max_depth: 5
+    lightgbm_dart:
+      num_leaves: 25
+
+# 2. Volatility and Market Stress Indicators
+theme_volatility_and_market_stress_indicators:
+  description: "Models based on volatility and market stress indicators."
+  features_from_list: "theme_volatility_and_market_stress_indicators_selected_features.txt"
+  target_column: "regime_t_plus_6m"
+  models_to_run:
+    - xgboost
+    - lightgbm_dart
+    - catboost
+  cv_params:
+    n_splits: 5
+
+# 3. Market Internals
+theme_market_internals:
+  description: "Models based on market internals like advance-decline lines and put/call ratios."
+  features_from_list: "theme_market_internals_selected_features.txt"
+  target_column: "regime_t_plus_6m"
+  models_to_run:
+    - xgboost
+    - lightgbm_dart
+    - catboost
+  cv_params:
+    n_splits: 5
+
+# 4. Intermarket Relationships
+theme_intermarket_relationships:
+  description: "Models based on intermarket relationships (e.g., stocks vs bonds, copper vs gold)."
+  features_from_list: "theme_intermarket_relationships_selected_features.txt"
+  target_column: "regime_t_plus_6m"
+  models_to_run:
+    - xgboost
+    - lightgbm_dart
+    - catboost
+  cv_params:
+    n_splits: 5
+
+# 5. Credit and Bond Market Tells
+theme_credit_and_bond_market_tells:
+  description: "Models based on credit spreads and bond market signals."
+  features_from_list: "theme_credit_and_bond_market_tells_selected_features.txt"
+  target_column: "regime_t_plus_6m"
+  models_to_run:
+    - xgboost
+    - lightgbm_dart
+    - catboost
+  cv_params:
+    n_splits: 5
+
+# 6. Sentiment and Behavior Gauges
+theme_sentiment_and_behavior_gauges:
+  description: "Models based on sentiment surveys, positioning, and behavioral gauges."
+  features_from_list: "theme_sentiment_and_behavior_gauges_selected_features.txt"
+  target_column: "regime_t_plus_6m"
+  models_to_run:
+    - xgboost
+    - lightgbm_dart
+    - catboost
+  cv_params:
+    n_splits: 5
+
+# 7. Macro Economic Data and Forecasts
+theme_macro_economic_data_and_forecasts:
+  description: "Models based on macroeconomic data like inflation, employment, and growth."
+  features_from_list: "theme_macro_economic_data_and_forecasts_selected_features.txt"
+  target_column: "regime_t_plus_6m"
+  models_to_run:
+    - xgboost
+    - lightgbm_dart
+    - catboost
+  cv_params:
+    n_splits: 5
+
+# 8. Market Structure & Fund Flow Indicators
+theme_market_structure_fund_flow_indicators:
+  description: "Models based on market structure and fund flow indicators like the Smart Money Index."
+  features_from_list: "theme_market_structure_fund_flow_indicators_selected_features.txt"
+  target_column: "regime_t_plus_6m"
+  models_to_run:
+    - xgboost
+    - lightgbm_dart
+    - catboost
+  cv_params:
+    n_splits: 5
+
+# 9. Sector and Micro-Market Tells
+theme_sector_and_micro_market_tells:
+  description: "Models based on relative performance of different market sectors and segments."
+  features_from_list: "theme_sector_and_micro_market_tells_selected_features.txt"
+  target_column: "regime_t_plus_6m"
+  models_to_run:
+    - xgboost
+    - lightgbm_dart
+    - catboost
+  cv_params:
+    n_splits: 5
+
+# 10. Global Markets and Currency Signals
+theme_global_markets_and_currency_signals:
+  description: "Models based on global market signals like the DXY, oil prices, and emerging markets."
+  features_from_list: "theme_global_markets_and_currency_signals_selected_features.txt"
+  target_column: "regime_t_plus_6m"
+  models_to_run:
+    - xgboost
+    - lightgbm_dart
+    - catboost
+  cv_params:
+    n_splits: 5
+
+# 11. Advanced Derivative-Based Metrics
+theme_advanced_derivative_based_metrics:
+  description: "Models based on advanced options market data like Gamma Exposure (GEX)."
+  features_from_list: "theme_advanced_derivative_based_metrics_selected_features.txt"
+  target_column: "regime_t_plus_6m"
+  models_to_run:
+    - xgboost
+    - lightgbm_dart
+    - catboost
+  cv_params:
+    n_splits: 5

@@ -34,18 +34,31 @@ class XGBoostModel(AbstractModel):
 
         self.model = xgb.XGBClassifier(**self.model_params)
 
+        X_train_np = X_train.values if isinstance(X_train, pd.DataFrame) else X_train
+        y_train_np = y_train.values if isinstance(y_train, pd.Series) else y_train
+        sw_train_np = (
+            sample_weight_train.values if isinstance(sample_weight_train, pd.Series) else sample_weight_train
+        )
+
         eval_set = []
         fit_params = {}
 
         if X_val is not None and y_val is not None:
-            eval_set.append((X_val.values, y_val.values))
+            X_val_np = X_val.values if isinstance(X_val, pd.DataFrame) else X_val
+            y_val_np = y_val.values if isinstance(y_val, pd.Series) else y_val
+            eval_set.append((X_val_np, y_val_np))
+
             if sample_weight_val is not None:
-                fit_params["eval_sample_weight"] = [sample_weight_val.values]
+                sw_val_np = (
+                    sample_weight_val.values if isinstance(sample_weight_val, pd.Series) else sample_weight_val
+                )
+                fit_params["eval_sample_weight"] = [sw_val_np]
+
             if early_stopping_rounds is not None:
                 fit_params["early_stopping_rounds"] = early_stopping_rounds
 
-        if sample_weight_train is not None:
-            fit_params["sample_weight"] = sample_weight_train.values
+        if sw_train_np is not None:
+            fit_params["sample_weight"] = sw_train_np
 
         logger.info(
             f"Fitting {self.model_name} with params: {self.model_params} "
@@ -53,8 +66,8 @@ class XGBoostModel(AbstractModel):
         )
         try:
             self.model.fit(
-                X_train.values,
-                y_train.values,
+                X_train_np,
+                y_train_np,
                 eval_set=eval_set if eval_set else None,
                 verbose=kwargs.get("verbose", False),
                 **fit_params,
@@ -121,7 +134,11 @@ class LightGBMModel(AbstractModel):
     ) -> "LightGBMModel":
         super().fit(X_train, y_train)
 
-        self.model = lgb.LGBMClassifier(**self.model_params)
+        fit_model_params = self.model_params.copy()
+        if fit_model_params.get("objective") in ["multiclass", "multi_logloss"]:
+            fit_model_params["num_class"] = y_train.nunique()
+
+        self.model = lgb.LGBMClassifier(**fit_model_params)
 
         eval_set = []
         fit_params = {}
@@ -142,7 +159,7 @@ class LightGBMModel(AbstractModel):
             fit_params["sample_weight"] = sample_weight_train
 
         logger.info(
-            f"Fitting {self.model_name} with params: {self.model_params} "
+            f"Fitting {self.model_name} with params: {fit_model_params} "
             f"and fit_params: {list(fit_params.keys())}"
         )
         try:
@@ -194,7 +211,14 @@ class CatBoostModel(AbstractModel):
     ) -> "CatBoostModel":
         super().fit(X_train, y_train)
 
-        self.model = cb.CatBoostClassifier(**self.model_params)
+        fit_model_params = self.model_params.copy()
+
+        if fit_model_params.get("subsample", 1.0) < 1.0 and fit_model_params.get("bagging_temperature", 0) > 0:
+            if "bootstrap_type" not in fit_model_params or fit_model_params.get("bootstrap_type") == "Bayesian":
+                fit_model_params["bootstrap_type"] = "Bernoulli"
+                logger.debug("Set CatBoost bootstrap_type to Bernoulli to support subsample parameter.")
+
+        self.model = cb.CatBoostClassifier(**fit_model_params)
 
         eval_set = None
         fit_params = {}
@@ -212,7 +236,7 @@ class CatBoostModel(AbstractModel):
             fit_params["sample_weight"] = sample_weight_train
 
         logger.info(
-            f"Fitting {self.model_name} with params: {self.model_params} "
+            f"Fitting {self.model_name} with params: {fit_model_params} "
             f"and fit_params: {list(fit_params.keys())}"
         )
         try:

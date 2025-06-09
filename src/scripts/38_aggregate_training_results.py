@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 BASE_REPORT_DIR = PROJECT_ROOT_PATH / "data" / "reports" / "supervised_learning"
-THEMATIC_MODELS_DIR = BASE_REPORT_DIR / "thematic_models/thematic_models"
+THEMATIC_MODELS_DIR = BASE_REPORT_DIR / "thematic_models"
 OUTPUT_FILENAME = BASE_REPORT_DIR / "master_results_summary.csv"
 
 

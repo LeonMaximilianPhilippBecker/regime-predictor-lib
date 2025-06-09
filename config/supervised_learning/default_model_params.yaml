@@ -1,0 +1,47 @@
+xgboost:
+  objective: 'multi:softprob'
+  eval_metric: 'mlogloss'
+  n_estimators: 200
+  learning_rate: 0.05
+  max_depth: 4
+  subsample: 0.8
+  colsample_bytree: 0.8
+  gamma: 0
+  reg_alpha: 0
+  reg_lambda: 1
+  use_label_encoder: False
+  random_state: 42
+  n_jobs: -1
+
+lightgbm_dart:
+  objective: 'multiclass'
+  metric: 'multi_logloss'
+  boosting_type: 'gbdt'
+  n_estimators: 1000
+  learning_rate: 0.05
+  num_leaves: 31
+  max_depth: -1
+  subsample: 0.8
+  colsample_bytree: 0.8
+  reg_alpha: 0.0
+  reg_lambda: 0.0
+  drop_rate: 0.1
+  skip_drop: 0.5
+  max_drop: 50
+  uniform_drop: False
+  xgboost_dart_mode: False
+  random_state: 42
+  n_jobs: -1
+  verbose: -1
+
+
+catboost:
+  loss_function: 'MultiClass'
+  eval_metric: 'MultiClass'
+  iterations: 200
+  learning_rate: 0.05
+  depth: 6
+  l2_leaf_reg: 3
+  random_seed: 42
+  verbose: 0
+  thread_count: -1
