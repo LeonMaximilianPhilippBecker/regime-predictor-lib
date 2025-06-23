@@ -21,12 +21,8 @@ if str(PROJECT_ROOT_PATH / "src") not in sys.path:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# --- Configuration ---
-# Set this to True or False to train the models with or without the current regime as a feature.
-# This should match the HPO run you want to use the results from.
 INCLUDE_CURRENT_REGIME_FEATURE = False
 
-# --- File Paths ---
 DB_PATH = PROJECT_ROOT_PATH / "data" / "db" / "volume" / "quant.db"
 DEFAULT_MODEL_PARAMS_PATH = PROJECT_ROOT_PATH / "config" / "supervised_learning" / "default_model_params.yaml"
 THEMATIC_PIPELINES_PATH = PROJECT_ROOT_PATH / "config" / "supervised_learning" / "thematic_pipelines.yaml"
@@ -42,8 +38,8 @@ else:
     experiment_name = "thematic_models"
     logger.info("TRAINING FINAL MODELS: EXCLUDING 'regime_t' as a feature.")
 
-BASE_MODEL_DIR = PROJECT_ROOT_PATH / "data" / "models" / "supervised" / experiment_name
-BASE_REPORT_DIR = PROJECT_ROOT_PATH / "data" / "reports" / "supervised_learning" / experiment_name
+BASE_MODEL_DIR = PROJECT_ROOT_PATH / "data" / "models" / "supervised"
+BASE_REPORT_DIR = PROJECT_ROOT_PATH / "data" / "reports" / "supervised_learning"
 
 MODEL_CLASS_MAP = {
     "xgboost": XGBoostModel,
@@ -117,14 +113,35 @@ def main():
             and "regime_t" not in features_to_use
         ):
             features_to_use.append("regime_t")
+            logger.info("Added 'regime_t' to the feature set for this run.")
 
         target_col = config["target_column"]
-        X = df_theme[features_to_use].copy()
-        y = df_theme[target_col].dropna()
-        X = X.loc[y.index]  # Align X with non-NaN y
+        if target_col not in df_theme.columns:
+            logger.error(f"Target column '{target_col}' not found. Skipping.")
+            continue
+
+        if not features_to_use:
+            logger.warning(f"No valid features for theme '{theme_name}'. Skipping.")
+            continue
+
+        df_model_data = df_theme[features_to_use + [target_col]].dropna(subset=[target_col])
+        X = df_model_data[features_to_use].copy()
+        y = df_model_data[target_col]
 
         X.replace([np.inf, -np.inf], np.nan, inplace=True)
-        X.ffill(inplace=True).bfill(inplace=True)
+
+        X.ffill(inplace=True)
+
+        initial_rows = len(X)
+        if X.isnull().values.any():
+            X.dropna(inplace=True)
+            y = y.loc[X.index]  # Re-align target variable
+            logger.info(f"Dropped {initial_rows - len(X)} leading rows with NaN values after ffill.")
+        # --- END OF CORRECTION ---
+
+        if X.empty:
+            logger.warning(f"Feature set for {theme_name} is empty after cleaning. Skipping.")
+            continue
 
         ModelClass = MODEL_CLASS_MAP.get(model_type)
         model_wrapper = ModelClass(model_params=final_model_params)

@@ -1,3 +1,4 @@
+# PATH: src/regime_predictor_lib/supervised_learning/training/trainer.py
 import logging
 import pickle
 import time
@@ -19,12 +20,12 @@ logger = logging.getLogger(__name__)
 
 class ModelTrainer:
     def __init__(
-        self,
-        model_wrapper: AbstractModel,
-        cv_splitter: BaseCrossValidator,
-        result_saver: ResultSaver,
-        theme_name: str,
-        label_encoder: Optional[LabelEncoder] = None,
+            self,
+            model_wrapper: AbstractModel,
+            cv_splitter: BaseCrossValidator,
+            result_saver: ResultSaver,
+            theme_name: str,
+            label_encoder: Optional[LabelEncoder] = None,
     ):
         self.model_wrapper = model_wrapper
         self.cv_splitter = cv_splitter
@@ -36,7 +37,6 @@ class ModelTrainer:
         self.cv_fold_metrics: List[Dict[str, Any]] = []
         self.mda_fold_results: List[pd.DataFrame] = []
         self.oof_predictions: Optional[pd.DataFrame] = None
-        self.trained_final_model: Optional[AbstractModel] = None
         self.training_logs: str = ""
 
         logger.info(f"ModelTrainer initialized for {self.theme_name} - {self.model_config_name}")
@@ -58,14 +58,14 @@ class ModelTrainer:
         return pd.Series(y_encoded, index=y.index, name=y.name), list(range(len(self.label_encoder.classes_)))
 
     def run_cross_validation(
-        self,
-        X: pd.DataFrame,
-        y: pd.Series,
-        groups: Optional[pd.Series] = None,
-        fit_params: Optional[Dict[str, Any]] = None,
-        use_class_weights: bool = True,
-        run_mda: bool = True,
-        mda_n_repeats: int = 5,
+            self,
+            X: pd.DataFrame,
+            y: pd.Series,
+            groups: Optional[pd.Series] = None,
+            fit_params: Optional[Dict[str, Any]] = None,
+            use_class_weights: bool = True,
+            run_mda: bool = True,
+            mda_n_repeats: int = 5,
     ) -> Dict[str, Any]:
         self._log(f"Starting cross-validation for {self.model_config_name} on {self.theme_name}...")
         if fit_params is None:
@@ -88,7 +88,7 @@ class ModelTrainer:
         self.mda_fold_results = []
 
         for fold_idx, (train_indices, val_indices) in enumerate(
-            self.cv_splitter.split(X, y_processed, groups=groups)
+                self.cv_splitter.split(X, y_processed, groups=groups)
         ):
             self._log(f"--- Fold {fold_idx + 1}/{self.cv_splitter.get_n_splits()} ---")
 
@@ -124,17 +124,31 @@ class ModelTrainer:
             y_pred_val = current_model.predict(X_val_fold)
             y_proba_val = current_model.predict_proba(X_val_fold)
 
+            # --- THIS IS THE KEY CHANGE ---
+            # Get the classes the model was *actually* trained on in this fold
+            fold_trained_classes = current_model.model.classes_
+
+            # Create the full-sized DataFrame first
             current_val_indices = oof_index[val_indices]
+            oof_proba_df = pd.DataFrame(
+                0.0,
+                index=current_val_indices,
+                columns=[f"proba_class_{i}" for i in class_labels_encoded]
+            )
+
+            # Create a temporary DataFrame with the probabilities we got
+            temp_proba_df = pd.DataFrame(
+                y_proba_val,
+                index=current_val_indices,
+                columns=[f"proba_class_{c}" for c in fold_trained_classes]
+            )
+
+            oof_proba_df.update(temp_proba_df)
+
             oof_indices_list.append(current_val_indices)
             oof_true_list.append(y_val_fold)
             oof_preds_list.append(pd.Series(y_pred_val, index=current_val_indices))
-            oof_probas_list.append(
-                pd.DataFrame(
-                    y_proba_val,
-                    index=current_val_indices,
-                    columns=[f"proba_class_{i}" for i in class_labels_encoded],
-                )
-            )
+            oof_probas_list.append(oof_proba_df)  # Append the correctly shaped DataFrame
 
             fold_metrics_results = calculate_classification_metrics(
                 y_val_fold, y_pred_val, y_proba_val, labels=class_labels_encoded
@@ -142,10 +156,6 @@ class ModelTrainer:
             fold_metrics_results["fold"] = fold_idx + 1
             fold_metrics_results["training_time_seconds"] = train_time
             self.cv_fold_metrics.append(fold_metrics_results)
-            self._log(
-                f"Fold {fold_idx + 1} metrics:"
-                f" { {k: f'{v:.4f}' if isinstance(v, float) else v for k, v in fold_metrics_results.items()} }"
-            )
 
             if run_mda:
                 try:
@@ -192,6 +202,7 @@ class ModelTrainer:
                     self.oof_predictions["predicted_label"].astype(int)
                 )
 
+        # The rest of the function remains the same...
         cv_metrics_df = pd.DataFrame(self.cv_fold_metrics)
         aggregated_metrics = {}
         for col in cv_metrics_df.columns:
@@ -213,11 +224,11 @@ class ModelTrainer:
         return aggregated_metrics
 
     def train_final_model(
-        self,
-        X: pd.DataFrame,
-        y: pd.Series,
-        sample_weight: Optional[pd.Series] = None,
-        fit_params: Optional[Dict[str, Any]] = None,
+            self,
+            X: pd.DataFrame,
+            y: pd.Series,
+            sample_weight: Optional[pd.Series] = None,
+            fit_params: Optional[Dict[str, Any]] = None,
     ) -> AbstractModel:
         self._log(f"Training final model {self.model_config_name} on {self.theme_name}...")
         if fit_params is None:
@@ -253,6 +264,7 @@ class ModelTrainer:
             le_dir = self.result_saver._get_output_path(
                 self.theme_name, self.model_config_name, is_model_artifact=True
             )
+            le_dir.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
             with open(le_dir / le_filename, "wb") as f:
                 pickle.dump(self.label_encoder, f)
             self._log(f"Saved LabelEncoder to {le_dir / le_filename}")

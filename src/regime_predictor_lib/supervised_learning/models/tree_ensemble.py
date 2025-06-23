@@ -20,19 +20,28 @@ class XGBoostModel(AbstractModel):
         self.model: Optional[xgb.XGBClassifier] = None
 
     def fit(
-        self,
-        X_train: pd.DataFrame,
-        y_train: pd.Series,
-        X_val: Optional[pd.DataFrame] = None,
-        y_val: Optional[pd.Series] = None,
-        sample_weight_train: Optional[pd.Series] = None,
-        sample_weight_val: Optional[pd.Series] = None,
-        early_stopping_rounds: Optional[int] = None,
-        **kwargs,
+            self,
+            X_train: pd.DataFrame,
+            y_train: pd.Series,
+            X_val: Optional[pd.DataFrame] = None,
+            y_val: Optional[pd.Series] = None,
+            sample_weight_train: Optional[pd.Series] = None,
+            sample_weight_val: Optional[pd.Series] = None,
+            early_stopping_rounds: Optional[int] = None,
+            **kwargs,
     ) -> "XGBoostModel":
         super().fit(X_train, y_train)
 
-        self.model = xgb.XGBClassifier(**self.model_params)
+        fit_model_params = self.model_params.copy()
+
+        label_encoder = kwargs.get("label_encoder")
+        if fit_model_params.get("objective") in ["multi:softprob", "multi:softmax"]:
+            if label_encoder and hasattr(label_encoder, 'classes_'):
+                num_classes = len(label_encoder.classes_)
+                if num_classes > 1:
+                    fit_model_params["num_class"] = num_classes
+
+        self.model = xgb.XGBClassifier(**fit_model_params)
 
         X_train_np = X_train.values if isinstance(X_train, pd.DataFrame) else X_train
         y_train_np = y_train.values if isinstance(y_train, pd.Series) else y_train
@@ -47,13 +56,6 @@ class XGBoostModel(AbstractModel):
             X_val_np = X_val.values if isinstance(X_val, pd.DataFrame) else X_val
             y_val_np = y_val.values if isinstance(y_val, pd.Series) else y_val
             eval_set.append((X_val_np, y_val_np))
-
-            if sample_weight_val is not None:
-                sw_val_np = (
-                    sample_weight_val.values if isinstance(sample_weight_val, pd.Series) else sample_weight_val
-                )
-                fit_params["eval_sample_weight"] = [sw_val_np]
-
             if early_stopping_rounds is not None:
                 fit_params["early_stopping_rounds"] = early_stopping_rounds
 
@@ -61,20 +63,17 @@ class XGBoostModel(AbstractModel):
             fit_params["sample_weight"] = sw_train_np
 
         logger.info(
-            f"Fitting {self.model_name} with params: {self.model_params} "
+            f"Fitting {self.model_name} with params: {fit_model_params} "
             f"and fit_params: {list(fit_params.keys())}"
         )
-        try:
-            self.model.fit(
-                X_train_np,
-                y_train_np,
-                eval_set=eval_set if eval_set else None,
-                verbose=kwargs.get("verbose", False),
-                **fit_params,
-            )
-        except Exception as e:
-            logger.error(f"Error during {self.model_name} fitting: {e}", exc_info=True)
-            raise
+
+        self.model.fit(
+            X_train_np,
+            y_train_np,
+            eval_set=eval_set if eval_set else None,
+            verbose=kwargs.get("verbose", False),
+            **fit_params,
+        )
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
@@ -122,21 +121,26 @@ class LightGBMModel(AbstractModel):
         self.model: Optional[lgb.LGBMClassifier] = None
 
     def fit(
-        self,
-        X_train: pd.DataFrame,
-        y_train: pd.Series,
-        X_val: Optional[pd.DataFrame] = None,
-        y_val: Optional[pd.Series] = None,
-        sample_weight_train: Optional[pd.Series] = None,
-        sample_weight_val: Optional[pd.Series] = None,
-        early_stopping_rounds: Optional[int] = None,
-        **kwargs,
+            self,
+            X_train: pd.DataFrame,
+            y_train: pd.Series,
+            X_val: Optional[pd.DataFrame] = None,
+            y_val: Optional[pd.Series] = None,
+            sample_weight_train: Optional[pd.Series] = None,
+            sample_weight_val: Optional[pd.Series] = None,
+            early_stopping_rounds: Optional[int] = None,
+            **kwargs,
     ) -> "LightGBMModel":
         super().fit(X_train, y_train)
 
         fit_model_params = self.model_params.copy()
+
         if fit_model_params.get("objective") in ["multiclass", "multi_logloss"]:
-            fit_model_params["num_class"] = y_train.nunique()
+            label_encoder = kwargs.get("label_encoder")
+            if label_encoder and hasattr(label_encoder, 'classes_'):
+                num_classes = len(label_encoder.classes_)
+                if num_classes > 1:
+                    fit_model_params["num_class"] = num_classes
 
         self.model = lgb.LGBMClassifier(**fit_model_params)
 
@@ -162,11 +166,7 @@ class LightGBMModel(AbstractModel):
             f"Fitting {self.model_name} with params: {fit_model_params} "
             f"and fit_params: {list(fit_params.keys())}"
         )
-        try:
-            self.model.fit(X_train, y_train, eval_set=eval_set if eval_set else None, **fit_params)
-        except Exception as e:
-            logger.error(f"Error during {self.model_name} fitting: {e}", exc_info=True)
-            raise
+        self.model.fit(X_train, y_train, eval_set=eval_set if eval_set else None, **fit_params)
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
@@ -199,19 +199,24 @@ class CatBoostModel(AbstractModel):
         self.model: Optional[cb.CatBoostClassifier] = None
 
     def fit(
-        self,
-        X_train: pd.DataFrame,
-        y_train: pd.Series,
-        X_val: Optional[pd.DataFrame] = None,
-        y_val: Optional[pd.Series] = None,
-        sample_weight_train: Optional[pd.Series] = None,
-        sample_weight_val: Optional[pd.Series] = None,
-        early_stopping_rounds: Optional[int] = None,
-        **kwargs,
+            self,
+            X_train: pd.DataFrame,
+            y_train: pd.Series,
+            X_val: Optional[pd.DataFrame] = None,
+            y_val: Optional[pd.Series] = None,
+            sample_weight_train: Optional[pd.Series] = None,
+            sample_weight_val: Optional[pd.Series] = None,
+            early_stopping_rounds: Optional[int] = None,
+            **kwargs,
     ) -> "CatBoostModel":
         super().fit(X_train, y_train)
 
         fit_model_params = self.model_params.copy()
+
+        if fit_model_params.get("loss_function") == "MultiClass":
+            label_encoder = kwargs.get("label_encoder")
+            if label_encoder and hasattr(label_encoder, 'classes_'):
+                fit_model_params['classes_count'] = len(label_encoder.classes_)
 
         if fit_model_params.get("subsample", 1.0) < 1.0 and fit_model_params.get("bagging_temperature", 0) > 0:
             if "bootstrap_type" not in fit_model_params or fit_model_params.get("bootstrap_type") == "Bayesian":
@@ -239,11 +244,7 @@ class CatBoostModel(AbstractModel):
             f"Fitting {self.model_name} with params: {fit_model_params} "
             f"and fit_params: {list(fit_params.keys())}"
         )
-        try:
-            self.model.fit(X_train, y_train, eval_set=eval_set, **fit_params)
-        except Exception as e:
-            logger.error(f"Error during {self.model_name} fitting: {e}", exc_info=True)
-            raise
+        self.model.fit(X_train, y_train, eval_set=eval_set, **fit_params)
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
@@ -262,9 +263,9 @@ class CatBoostModel(AbstractModel):
 
     def get_feature_importance(self, **kwargs) -> Optional[pd.Series]:
         if (
-            self.model is None
-            or not hasattr(self.model, "get_feature_importance")
-            or not self.feature_names_in_
+                self.model is None
+                or not hasattr(self.model, "get_feature_importance")
+                or not self.feature_names_in_
         ):
             logger.warning("Model not fitted or feature importances not available.")
             return None
